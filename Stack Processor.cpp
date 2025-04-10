@@ -213,34 +213,67 @@ void deleteSingleChar(CharNode*& head, char target) {
 }
 
 
-bool isZeroList(CharNode* head) {
-	while (head && head->value == '0') {
-		head = head->next;
-	}
-	return head == nullptr || (head->next == nullptr && head->value == '-');
-}
-
-CharNode* trimLeadingZeros(CharNode* head) {
-	while (head && head->value == '0' && head->next) {
-		head = head->next;
-	}
-	return head;
-}
+//bool isZeroList(CharNode* head) {
+//	while (head && head->value == '0') {
+//		head = head->next;
+//	}
+//	return head == nullptr || (head->next == nullptr && head->value == '-');
+//}
+//
+//CharNode* trimLeadingZeros(CharNode* head) {
+//	while (head && head->value == '0' && head->next) {
+//		head = head->next;
+//	}
+//	return head;
+//}
+//
+//bool charListEquals(CharNode* a, CharNode* b) {
+//	if (isZeroList(a) && isZeroList(b)) return true;
+//
+//	a = trimLeadingZeros(a);
+//	b = trimLeadingZeros(b);
+//
+//	// Compare each digit including optional trailing '-'
+//	while (a && b) {
+//		if (a->value != b->value)
+//			return false;
+//		a = a->next;
+//		b = b->next;
+//	}
+//	return a == nullptr && b == nullptr;
+//}
 
 bool charListEquals(CharNode* a, CharNode* b) {
-	if (isZeroList(a) && isZeroList(b)) return true;
+	CharNode* temp1 = a;
+	CharNode* temp2 = b;
 
-	a = trimLeadingZeros(a);
-	b = trimLeadingZeros(b);
+	int sum1 = 0, sum2 = 0;
+	bool neg1 = false, neg2 = false;
 
-	// Compare each digit including optional trailing '-'
-	while (a && b) {
-		if (a->value != b->value)
-			return false;
-		a = a->next;
-		b = b->next;
+
+
+	while (temp1->next) {
+		sum1 += temp1->value;
+		temp1 = temp1->next;
+
 	}
-	return a == nullptr && b == nullptr;
+
+	if (!a && !b) return true;             // both ended → equal
+	if (!a || !b) return false;            // one ended → not equal
+	if (a->value != b->value) return false; // values differ → not equal
+
+	if (temp1->value == '-') {
+		neg1 = true;
+		deleteSingleChar(temp1, temp1->value);
+	}
+	else if (temp2->value == '-')
+	{
+		neg2 = true;
+		deleteSingleChar(temp2, temp2->value);
+	}
+
+
+	return charListEquals(a->next, b->next); // keep comparing
 }
 
 
