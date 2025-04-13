@@ -3,9 +3,9 @@ using namespace std;
 const int MAX = 20001;
 char program[MAX];
 char input[MAX];
-long long int inputPointer = 0;
-long long int inputLength;
-long long int programLength = 0;
+int inputPointer = 0;
+int inputLength;
+int programLength = 0;
 
 struct CharNode {
 	char value;
@@ -69,7 +69,7 @@ CharNode* pop(StackNode*& stackTop) {
 	return list;
 }
 
-StackNode* getStackNodeAtIndex(StackNode* stackTop, long long int index) {
+StackNode* getStackNodeAtIndex(StackNode* stackTop,int index) {
 	if (!stackTop) return nullptr;
 	if (index == 0) return stackTop;
 	return getStackNodeAtIndex(stackTop->next, index - 1);
@@ -85,7 +85,7 @@ void swapTopTwo(StackNode*& stackTop) {
 	stackTop = second;
 }
 
-void printStackReversed(StackNode* node, long long int index = 0) {
+void printStackReversed(StackNode* node, int index = 0) {
 	if (!node) return;
 
 	printStackReversed(node->next, index + 1);
@@ -95,7 +95,7 @@ void printStackReversed(StackNode* node, long long int index = 0) {
 }
 
 
-void printStack(StackNode* stackTop, long long int index = 0) {
+void printStack(StackNode* stackTop, int index = 0) {
 	if (!stackTop) return;
 	cout << index << ": ";
 	printCharList(stackTop->list);
@@ -103,32 +103,32 @@ void printStack(StackNode* stackTop, long long int index = 0) {
 }
 
 
-long long int getLength(long long int i = 0) {
+int getLength(int i = 0) {
 	if (program[i] == '\0') return i;
 	return getLength(i + 1);
 }
 
 
-long long charListToIntHelper(CharNode* node, long long mult) {
+int charListToIntHelper(CharNode* node, long long int mult) {
 	if (!node) return 0;
-	if (!node->next && node->value == '-') return 0;
 
-	// Prevent overflow when multiplier is too large
-	if (mult > 100000000000000000LL) return 0;
+	CharNode* list = nullptr; // empty list
+	StackNode* stackTop = nullptr;
+	if (!node->next && node->value == '-') return 0;
 
 	int digit = node->value - '0';
 	return digit * mult + charListToIntHelper(node->next, mult * 10);
 }
 
-
-long long int charListToInt(CharNode* head) {
+int charListToInt(CharNode* head) {
 	if (!head) return 0;
-	long long result = charListToIntHelper(head, 1);
+	int result = charListToIntHelper(head, 1);
 	CharNode* temp = head;
 	while (temp->next) temp = temp->next;
 	if (temp->value == '-') result = -result;
-	return static_cast<int>(result); 
+	return result;
 }
+
 
 
 void appendChar(CharNode*& head, char ch) {
@@ -143,19 +143,41 @@ void appendChar(CharNode*& head, char ch) {
 }
 
 
+//CharNode* intToCharList(long long int value) {
+//	if (value == 0)
+//		return createCharNode('0');
+//
+//	bool isNegative = false;
+//	if (value < 0) {
+//		isNegative = true;
+//		value = -value;
+//	}
+//
+//	CharNode* head = nullptr;
+//	while (value > 0) {
+//		int digit = value % 10;
+//		appendChar(head, digit + '0');
+//		value /= 10;
+//	}
+//	if (isNegative) {
+//		CharNode* tail = head;
+//		while (tail->next) tail = tail->next;
+//		tail->next = createCharNode('-');
+//	}
+//	return head;
+//}
+
 CharNode* intToCharList(int value) {
 	if (value == 0)
 		return createCharNode('0');
-
 	bool isNegative = false;
 	if (value < 0) {
 		isNegative = true;
 		value = -value;
 	}
-
 	CharNode* head = nullptr;
 	while (value > 0) {
-		int digit = value % 10;
+		int digit = value % 10;  // digit remains int, because 0..9 fits in int.
 		appendChar(head, digit + '0');
 		value /= 10;
 	}
@@ -166,6 +188,7 @@ CharNode* intToCharList(int value) {
 	}
 	return head;
 }
+
 
 void removeTrailingMinus(CharNode*& head) {
 	if (!head) return;
@@ -212,38 +235,35 @@ void deleteSingleChar(CharNode*& head, char target) {
 	}
 }
 
-
-bool isZeroList(CharNode* head) {
-	while (head && head->value == '0') {
+int countDigits(CharNode* head) {
+	int count = 0;
+	while (head) {
+		if (head->value != '-') count++;
 		head = head->next;
 	}
-	return head == nullptr || (head->next == nullptr && head->value == '-');
+	return count;
 }
 
-CharNode* trimLeadingZeros(CharNode* head) {
-	while (head && head->value == '0' && head->next) {
-		head = head->next;
-	}
-	return head;
-}
-
+// Compare CharLists node by node
 bool charListEquals(CharNode* a, CharNode* b) {
-	if (isZeroList(a) && isZeroList(b)) return true;
-
-	a = trimLeadingZeros(a);
-	b = trimLeadingZeros(b);
-
-	// Compare each digit including optional trailing '-'
 	while (a && b) {
-		if (a->value != b->value)
-			return false;
+		if (a->value != b->value) return false;
 		a = a->next;
 		b = b->next;
 	}
 	return a == nullptr && b == nullptr;
 }
 
-
+bool charListCompare(CharNode* a, CharNode* b, int digitsA, int digitsB) {
+	if (digitsA == digitsB) {
+		while (a && b) {
+			if (a->value > b->value) return true;
+			a = a->next;
+			b = b->next;
+		}
+	}
+	return false;
+}
 
 
 void interpret(int ip, StackNode*& stackTop) {
@@ -348,7 +368,7 @@ void interpret(int ip, StackNode*& stackTop) {
 		CharNode* cList = pop(stackTop);
 		int c = charListToInt(cList);
 		deleteCharList(cList);
-		
+
 
 		StackNode* target = getStackNodeAtIndex(stackTop, c);
 
@@ -439,21 +459,88 @@ void interpret(int ip, StackNode*& stackTop) {
 		break;
 	}
 	case '=': {
-	if (stackTop && stackTop->next) {
-		CharNode* A = pop(stackTop);
-		CharNode* B = pop(stackTop);
+		if (stackTop && stackTop->next) {
+			CharNode* A = pop(stackTop);
+			CharNode* B = pop(stackTop);
 
-		if (charListEquals(A, B)) {
-			push(stackTop, createCharNode('1'));
-		} else {
-			push(stackTop, createCharNode('0'));
+			long long int digitsA = countDigits(A);
+			long long int digitsB = countDigits(B);
+
+			bool tooBig = (digitsA > 18 || digitsB > 18);
+
+			bool equal = false;
+			if (!tooBig) {
+				long long int aVal = charListToInt(A);
+				long long int bVal = charListToInt(B);
+				equal = (aVal == bVal);
+			}
+			else {
+				// Use structural check
+				equal = charListEquals(A, B);
+			}
+
+
+			CharNode* result = createCharNode(equal ? '1' : '0');
+			push(stackTop, result);
+			deleteCharList(A);
+			deleteCharList(B);
 		}
-		
-		deleteCharList(A);
-		deleteCharList(B);
+		break;
 	}
-	break;
-}
+	case '<': {
+		if (stackTop && stackTop->next) {
+			CharNode* A = pop(stackTop); // top
+			CharNode* B = pop(stackTop); // below top
+
+			int digitsA = countDigits(A);
+			int digitsB = countDigits(B);
+
+			bool tooBig = (digitsA > 18 || digitsB > 18);
+
+			bool isBLessThanA = false;
+			if (!tooBig) {
+				int aVal = charListToInt(A);
+				int bVal = charListToInt(B);
+				isBLessThanA = (bVal < aVal);  // Correct comparison
+			}
+			else {
+				isBLessThanA = charListCompare(A, B, digitsA, digitsB);
+				
+			}
+
+			CharNode* result = createCharNode(isBLessThanA ? '1' : '0');
+			push(stackTop, result);
+			deleteCharList(A);
+			deleteCharList(B);
+		}
+		break;
+	}
+	case '?': {
+		if (stackTop) {
+			CharNode* target = pop(stackTop);
+			CharNode* W = pop(stackTop);
+
+			int targetNum = charListToInt(target);
+			int intW = charListToInt(W);
+
+			bool jump = false;
+
+			if (W != nullptr) { 
+				if (W->value != '0' || W->next != nullptr || intW != 0) { 
+					jump = true;
+				}
+			}
+
+			deleteCharList(target);
+			deleteCharList(W);
+
+			if (jump) {
+				interpret(targetNum, stackTop);
+				return;
+			}
+		}
+		break;
+	}
 	default:
 		if (stackTop) {
 			stackTop->list = prependChar(stackTop->list, instr);
@@ -477,7 +564,7 @@ void deleteStackNode(StackNode* head) {
 int main() {
 
 	cin.getline(program, MAX);
-	cin.getline(input, MAX); 
+	cin.getline(input, MAX);
 
 	programLength = strlen(program);
 	inputLength = strlen(input);
@@ -488,5 +575,4 @@ int main() {
 	deleteStackNode(stackTop);
 	return 0;
 }
-
 
