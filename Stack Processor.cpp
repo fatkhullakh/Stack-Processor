@@ -75,6 +75,12 @@ StackNode* getStackNodeAtIndex(StackNode* stackTop,int index) {
 	return getStackNodeAtIndex(stackTop->next, index - 1);
 }
 
+CharNode* getCharNodeAtIndex(CharNode* head, int index) {
+	if (!head) return nullptr;
+	if (index == 0) return head;
+	return getCharNodeAtIndex(head->next, index - 1);
+}
+
 void swapTopTwo(StackNode*& stackTop) {
 	if (!stackTop || !stackTop->next) return;
 	StackNode* first = stackTop;
@@ -265,6 +271,10 @@ bool charListEquals(CharNode* a, CharNode* b) {
 	return a == nullptr && b == nullptr;
 }
 
+CharNode* addition(CharNode* a, CharNode* b) {
+
+}
+
 bool charListCompare(CharNode* a, CharNode* b, int digitsA, int digitsB) {
 	if (digitsA == digitsB) {
 		while (a && b) {
@@ -316,22 +326,6 @@ void interpret(int ip, StackNode*& stackTop) {
 	}
 	case '&': {
 		printStackReversed(stackTop);
-		break;
-	}
-	case '+': {
-		CharNode* aList = pop(stackTop);
-		CharNode* bList = pop(stackTop);
-
-		long long int a = charListToInt(aList);
-		long long int b = charListToInt(bList);
-
-		long long int result = a + b;
-
-		CharNode* resultList = intToCharList(result);
-		push(stackTop, resultList);
-
-		deleteCharList(aList);
-		deleteCharList(bList);
 		break;
 	}
 	case '-': {
@@ -493,6 +487,32 @@ void interpret(int ip, StackNode*& stackTop) {
 
 			CharNode* result = createCharNode(equal ? '1' : '0');
 			push(stackTop, result);
+			deleteCharList(A);
+			deleteCharList(B);
+		}
+		break;
+	}
+	case '+': {
+		if (stackTop && stackTop->next) {
+			CharNode* A = pop(stackTop);
+			CharNode* B = pop(stackTop);
+
+			long long int digitsA = countDigits(A);
+			long long int digitsB = countDigits(B);
+
+			bool tooBig = (digitsA > 18 || digitsB > 18);
+
+			int result;
+
+			if (!tooBig) {
+				long long int aVal = charListToInt(A);
+				long long int bVal = charListToInt(B);
+				result = aVal + bVal;
+			}
+			else {
+
+			}
+
 			deleteCharList(A);
 			deleteCharList(B);
 		}
