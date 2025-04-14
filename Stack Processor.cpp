@@ -109,12 +109,23 @@ int getLength(int i = 0) {
 }
 
 
-int charListToIntHelper(CharNode* node, long long int mult) {
-	if (!node) return 0;
+//long long int charListToIntHelper(CharNode* node, long long int mult) {
+//	if (!node) return 0;
+//
+//	//CharNode* list = nullptr; // empty list
+//	//StackNode* stackTop = nullptr;
+//	if (!node->next && node->value == '-') return 0;
+//
+//	long long int digit = node->value - '0';
+//	return digit * mult + charListToIntHelper(node->next, mult * 10);
+//}
 
-	CharNode* list = nullptr; // empty list
-	StackNode* stackTop = nullptr;
+long long charListToIntHelper(CharNode* node, long long mult) {
+	if (!node) return 0;
 	if (!node->next && node->value == '-') return 0;
+
+	// Prevent overflow when multiplier is too large
+	if (mult > 100000000000000000LL) return 0;
 
 	int digit = node->value - '0';
 	return digit * mult + charListToIntHelper(node->next, mult * 10);
@@ -311,10 +322,10 @@ void interpret(int ip, StackNode*& stackTop) {
 		CharNode* aList = pop(stackTop);
 		CharNode* bList = pop(stackTop);
 
-		int a = charListToInt(aList);
-		int b = charListToInt(bList);
+		long long int a = charListToInt(aList);
+		long long int b = charListToInt(bList);
 
-		int result = a + b;
+		long long int result = a + b;
 
 		CharNode* resultList = intToCharList(result);
 		push(stackTop, resultList);
