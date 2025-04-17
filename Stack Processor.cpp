@@ -69,7 +69,7 @@ CharNode* pop(StackNode*& stackTop) {
 	return list;
 }
 
-StackNode* getStackNodeAtIndex(StackNode* stackTop,int index) {
+StackNode* getStackNodeAtIndex(StackNode* stackTop, int index) {
 	if (!stackTop) return nullptr;
 	if (index == 0) return stackTop;
 	return getStackNodeAtIndex(stackTop->next, index - 1);
@@ -201,25 +201,44 @@ CharNode* intToCharList(int value) {
 }
 
 
+//void removeTrailingMinus(CharNode*& head) {
+//	if (!head) return;
+//
+//	if (!head->next && head->value == '-') {
+//		delete head;
+//		head = nullptr;
+//		return;
+//	}
+//
+//	CharNode* curr = head;
+//	while (curr->next && curr->next->next) {
+//		curr = curr->next;
+//	}
+//
+//	if (curr->next && curr->next->value == '-') {
+//		delete curr->next;
+//		curr->next = nullptr;
+//	}
+//}
+
 void removeTrailingMinus(CharNode*& head) {
 	if (!head) return;
 
-	if (!head->next && head->value == '-') {
-		delete head;
-		head = nullptr;
-		return;
-	}
-
 	CharNode* curr = head;
-	while (curr->next && curr->next->next) {
+	CharNode* prev = nullptr;
+
+	while (curr->next) {
+		prev = curr;
 		curr = curr->next;
 	}
 
-	if (curr->next && curr->next->value == '-') {
-		delete curr->next;
-		curr->next = nullptr;
+	if (curr->value == '-') {
+		if (prev) prev->next = nullptr;
+		else head = nullptr;
+		delete curr;
 	}
 }
+
 
 void deleteSingleChar(CharNode*& head, char target) {
 	if (!head) return;
@@ -276,6 +295,67 @@ bool charListCompare(CharNode* a, CharNode* b, int digitsA, int digitsB) {
 	return false;
 }
 
+char goToTail(CharNode* tail) {
+	if (tail->next == nullptr) return tail->value;
+	return goToTail(tail->next);
+}
+
+CharNode* bigIntAdd(CharNode* a, CharNode* b) {
+	int carry = 0;
+	CharNode* result = nullptr;
+	CharNode* tail = nullptr;
+
+
+	while (a || b || carry) {
+		int sum = carry;
+
+		if (a) {
+			sum += a->value - '0';
+			a = a->next;
+		}
+
+		if (b) {
+			sum += b->value - '0';
+			b = b->next;
+		}
+
+		carry = sum / 10;
+		int digit = sum % 10;
+
+		CharNode* newNode = createCharNode('0' + digit);
+
+		if (!result) {
+			result = newNode;   // first digit
+		}
+		else {
+			tail->next = newNode; // link to previous
+		}
+
+		tail = newNode; // update tail
+	}
+
+	return result;
+}
+
+CharNode* bigIntAddNeg(CharNode* a, CharNode* b) {
+	// First, remove the '-' at the end of both numbers
+	removeTrailingMinus(a);
+	removeTrailingMinus(b);
+
+	// Perform standard addition
+	CharNode* result = bigIntAdd(a, b);
+
+	// Append '-' to the end of the result
+	CharNode* tail = result;
+	if (!tail) return createCharNode('-'); // If result was zero (unlikely here), just return "-"
+
+	while (tail->next) {
+		tail = tail->next;
+	}
+	tail->next = createCharNode('-');
+
+	return result;
+}
 
 void interpret(int ip, StackNode*& stackTop) {
 	if (ip >= programLength) return;
@@ -316,22 +396,6 @@ void interpret(int ip, StackNode*& stackTop) {
 	}
 	case '&': {
 		printStackReversed(stackTop);
-		break;
-	}
-	case '+': {
-		CharNode* aList = pop(stackTop);
-		CharNode* bList = pop(stackTop);
-
-		long long int a = charListToInt(aList);
-		long long int b = charListToInt(bList);
-
-		long long int result = a + b;
-
-		CharNode* resultList = intToCharList(result);
-		push(stackTop, resultList);
-
-		deleteCharList(aList);
-		deleteCharList(bList);
 		break;
 	}
 	case '-': {
@@ -403,14 +467,6 @@ void interpret(int ip, StackNode*& stackTop) {
 			first->next = nullptr;
 
 			push(stackTop, first);
-
-			/*char d = stackTop->list->value;
-			push(stackTop, nullptr);
-			prependChar(stackTop->list, d);
-			CharNode* temp = stackTop->list;
-			temp = temp->next;
-			stackTop->list = temp;
-			delete temp;*/
 		}
 		break;
 	}
@@ -516,7 +572,7 @@ void interpret(int ip, StackNode*& stackTop) {
 			}
 			else {
 				isBLessThanA = charListCompare(A, B, digitsA, digitsB);
-				
+
 			}
 
 			CharNode* result = createCharNode(isBLessThanA ? '1' : '0');
@@ -536,8 +592,8 @@ void interpret(int ip, StackNode*& stackTop) {
 
 			bool jump = false;
 
-			if (W != nullptr) { 
-				if (W->value != '0' || W->next != nullptr || intW != 0) { 
+			if (W != nullptr) {
+				if (W->value != '0' || W->next != nullptr || intW != 0) {
 					jump = true;
 				}
 			}
@@ -550,6 +606,43 @@ void interpret(int ip, StackNode*& stackTop) {
 				return;
 			}
 		}
+		break;
+	}
+	case '+': {
+		CharNode* A = pop(stackTop);
+		CharNode* B = pop(stackTop);
+
+		int digitsA = countDigits(A);
+		int digitsB = countDigits(B);
+
+		bool aIsNeg = false, bIsNeg = false;
+
+		if (goToTail(A) == '-') aIsNeg = true;
+		if (goToTail(B) == '-') bIsNeg = true;
+
+		bool tooBig = (digitsA > 18 || digitsB > 18);
+
+		CharNode* result = nullptr;
+
+		if (!tooBig) {
+			int a = charListToInt(A);
+			int b = charListToInt(B);
+			result = intToCharList(a + b);
+		}
+		else {
+			if (!aIsNeg && !bIsNeg) {
+				result = bigIntAdd(A, B);
+			}
+			else if (aIsNeg && bIsNeg) {
+				result = bigIntAddNeg(A, B);
+			}
+		}
+
+
+		push(stackTop, result);
+
+		deleteCharList(A);
+		deleteCharList(B);
 		break;
 	}
 	default:
