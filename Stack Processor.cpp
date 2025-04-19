@@ -265,14 +265,20 @@ void deleteSingleChar(CharNode*& head, char target) {
 	}
 }
 
-int countDigits(CharNode* head) {
-	int count = 0;
-	while (head) {
-		if (head->value != '-') count++;
-		head = head->next;
-	}
-	return count;
+//int countDigits(CharNode* head) {
+//	int count = 0;
+//	while (head) {
+//		if (head->value != '-') count++;
+//		head = head->next;
+//	}
+//	return count;
+//}
+
+int countDigits(CharNode* h) {
+	if (!h) return 0;
+	return (h->value == '-' ? 0 : 1) + countDigits(h->next);
 }
+
 
 // Compare CharLists node by node
 bool charListEquals(CharNode* a, CharNode* b) {
