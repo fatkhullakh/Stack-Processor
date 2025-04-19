@@ -28,12 +28,21 @@ CharNode* prependChar(CharNode* head, char ch) {
 	return createCharNode(ch, head);
 }
 
+//void printCharList(CharNode* head) {
+//	while (head) {
+//		cout << head->value;
+//		head = head->next;
+//	}
+//	cout << endl;
+//}
+
 void printCharList(CharNode* head) {
-	while (head) {
-		cout << head->value;
-		head = head->next;
+	if (!head) {
+		cout << '\n';
+		return;
 	}
-	cout << endl;
+	cout << head->value;
+	printCharList(head->next);
 }
 
 CharNode* copyCharList(CharNode* head) {
@@ -43,13 +52,20 @@ CharNode* copyCharList(CharNode* head) {
 	return createCharNode(head->value, copyCharList(head->next));
 }
 
+//void deleteCharList(CharNode* head) {
+//	while (head) {
+//		CharNode* next = head->next;
+//		delete head;
+//		head = next;
+//	}
+//}
+
 void deleteCharList(CharNode* head) {
-	while (head) {
-		CharNode* next = head->next;
-		delete head;
-		head = next;
-	}
+	if (!head) return;
+	deleteCharList(head->next);
+	delete head;
 }
+
 
 void push(StackNode*& stackTop, CharNode* list) {
 	StackNode* newNode = new StackNode;
@@ -131,26 +147,49 @@ long long charListToIntHelper(CharNode* node, long long mult) {
 	return digit * mult + charListToIntHelper(node->next, mult * 10);
 }
 
+//int charListToInt(CharNode* head) {
+//	if (!head) return 0;
+//	int result = charListToIntHelper(head, 1);
+//	CharNode* temp = head;
+//	while (temp->next) temp = temp->next;
+//	if (temp->value == '-') result = -result;
+//	return result;
+//}
+
+char getTailValue(CharNode* head) {
+	return head->next ? getTailValue(head->next) : head->value;
+}
+
+// 4) Convert CharList to int, tail‐sign check via getTailValue
 int charListToInt(CharNode* head) {
 	if (!head) return 0;
 	int result = charListToIntHelper(head, 1);
-	CharNode* temp = head;
-	while (temp->next) temp = temp->next;
-	if (temp->value == '-') result = -result;
+	if (getTailValue(head) == '-') result = -result;
 	return result;
 }
 
 
+//void appendChar(CharNode*& head, char ch) {
+//	if (!head) {
+//		head = createCharNode(ch);
+//		return;
+//	}
+//	CharNode* curr = head;
+//	while (curr->next)
+//		curr = curr->next;
+//	curr->next = createCharNode(ch);
+//}
 
-void appendChar(CharNode*& head, char ch) {
+void appendCharRecursive(CharNode*& head, char ch) {
 	if (!head) {
 		head = createCharNode(ch);
 		return;
 	}
-	CharNode* curr = head;
-	while (curr->next)
-		curr = curr->next;
-	curr->next = createCharNode(ch);
+	if (!head->next) {
+		head->next = createCharNode(ch);
+		return;
+	}
+	appendCharRecursive(head->next, ch);
 }
 
 
@@ -178,127 +217,193 @@ void appendChar(CharNode*& head, char ch) {
 //	return head;
 //}
 
+//CharNode* intToCharList(int value) {
+//	if (value == 0)
+//		return createCharNode('0');
+//	bool isNegative = false;
+//	if (value < 0) {
+//		isNegative = true;
+//		value = -value;
+//	}
+//	CharNode* head = nullptr;
+//	while (value > 0) {
+//		int digit = value % 10;  // digit remains int, because 0..9 fits in int.
+//		appendChar(head, digit + '0');
+//		value /= 10;
+//	}
+//	if (isNegative) {
+//		CharNode* tail = head;
+//		while (tail->next) tail = tail->next;
+//		tail->next = createCharNode('-');
+//	}
+//	return head;
+//}
+
+CharNode* buildCharList(int value) {
+	if (value == 0) return nullptr;
+	CharNode* node = createCharNode((value % 10) + '0');
+	node->next = buildCharList(value / 10);
+	return node;
+}
+
+CharNode* getTail(CharNode* node) {
+	if (!node || !node->next) return node;
+	return getTail(node->next);
+}
+
 CharNode* intToCharList(int value) {
-	if (value == 0)
-		return createCharNode('0');
+	if (value == 0) return createCharNode('0');
 	bool isNegative = false;
 	if (value < 0) {
 		isNegative = true;
 		value = -value;
 	}
-	CharNode* head = nullptr;
-	while (value > 0) {
-		int digit = value % 10;  // digit remains int, because 0..9 fits in int.
-		appendChar(head, digit + '0');
-		value /= 10;
-	}
+	CharNode* result = buildCharList(value);
 	if (isNegative) {
-		CharNode* tail = head;
-		while (tail->next) tail = tail->next;
+		CharNode* tail = getTail(result);
 		tail->next = createCharNode('-');
 	}
-	return head;
+	return result;
 }
 
 
 //void removeTrailingMinus(CharNode*& head) {
 //	if (!head) return;
 //
-//	if (!head->next && head->value == '-') {
-//		delete head;
-//		head = nullptr;
-//		return;
-//	}
-//
 //	CharNode* curr = head;
-//	while (curr->next && curr->next->next) {
+//	CharNode* prev = nullptr;
+//
+//	while (curr->next) {
+//		prev = curr;
 //		curr = curr->next;
 //	}
 //
-//	if (curr->next && curr->next->value == '-') {
-//		delete curr->next;
-//		curr->next = nullptr;
+//	if (curr->value == '-') {
+//		if (prev) prev->next = nullptr;
+//		else head = nullptr;
+//		delete curr;
 //	}
 //}
 
 void removeTrailingMinus(CharNode*& head) {
 	if (!head) return;
-
-	CharNode* curr = head;
-	CharNode* prev = nullptr;
-
-	while (curr->next) {
-		prev = curr;
-		curr = curr->next;
-	}
-
-	if (curr->value == '-') {
-		if (prev) prev->next = nullptr;
-		else head = nullptr;
-		delete curr;
-	}
-}
-
-
-void deleteSingleChar(CharNode*& head, char target) {
-	if (!head) return;
-
-	// If the first node is the one to delete
-	if (head->value == target) {
-		CharNode* temp = head;
-		head = head->next;
-		delete temp;
+	if (!head->next && head->value == '-') {
+		delete head;
+		head = nullptr;
 		return;
 	}
-
-	// Traverse to find the node before the one we want to delete
-	CharNode* current = head;
-	while (current->next && current->next->value != target) {
-		current = current->next;
+	if (head->next && !head->next->next && head->next->value == '-') {
+		delete head->next;
+		head->next = nullptr;
+		return;
 	}
-
-	// If found, delete it
-	if (current->next) {
-		CharNode* temp = current->next;
-		current->next = temp->next;
-		delete temp;
-	}
+	removeTrailingMinus(head->next);
 }
 
-int countDigits(CharNode* head) {
-	int count = 0;
-	while (head) {
-		if (head->value != '-') count++;
-		head = head->next;
-	}
-	return count;
+
+
+//void deleteSingleChar(CharNode*& head, char target) {
+//	if (!head) return;
+//
+//	// If the first node is the one to delete
+//	if (head->value == target) {
+//		CharNode* temp = head;
+//		head = head->next;
+//		delete temp;
+//		return;
+//	}
+//
+//	// Traverse to find the node before the one we want to delete
+//	CharNode* current = head;
+//	while (current->next && current->next->value != target) {
+//		current = current->next;
+//	}
+//
+//	// If found, delete it
+//	if (current->next) {
+//		CharNode* temp = current->next;
+//		current->next = temp->next;
+//		delete temp;
+//	}
+//}
+
+//int countDigits(CharNode* head) {
+//	int count = 0;
+//	while (head) {
+//		if (head->value != '-') count++;
+//		head = head->next;
+//	}
+//	return count;
+//}
+
+int countDigits(CharNode* h) {
+	if (!h) return 0;
+	return (h->value == '-' ? 0 : 1) + countDigits(h->next);
 }
 
-// Compare CharLists node by node
+
+
+
+//bool charListEquals(CharNode* a, CharNode* b) {
+//	while (a && b) {
+//		if (a->value != b->value) return false;
+//		a = a->next;
+//		b = b->next;
+//	}
+//	return a == nullptr && b == nullptr;
+//}
+
+
 bool charListEquals(CharNode* a, CharNode* b) {
-	while (a && b) {
-		if (a->value != b->value) return false;
-		a = a->next;
-		b = b->next;
-	}
-	return a == nullptr && b == nullptr;
+	if (!a && !b) return true;
+	if (!a || !b) return false;
+	if (a->value != b->value) return false;
+	return charListEquals(a->next, b->next);
 }
+
+
+//bool charListCompare(CharNode* a, CharNode* b, int digitsA, int digitsB) {
+//	if (digitsA == digitsB) {
+//		while (a && b) {
+//			if (a->value > b->value) return true;
+//			a = a->next;
+//			b = b->next;
+//		}
+//	}
+//	return false;
+//}
 
 bool charListCompare(CharNode* a, CharNode* b, int digitsA, int digitsB) {
-	if (digitsA == digitsB) {
-		while (a && b) {
-			if (a->value > b->value) return true;
-			a = a->next;
-			b = b->next;
-		}
-	}
-	return false;
+	if (digitsA != digitsB) return false;
+	if (!a && !b) return false;
+	if (a->value > b->value) return true;
+	if (a->value < b->value) return false;
+	// equal so far → compare rest
+	return charListCompare(a->next, b->next, digitsA, digitsB);
 }
 
 char goToTail(CharNode* tail) {
 	if (tail->next == nullptr) return tail->value;
 	return goToTail(tail->next);
 }
+
+void appendCharListRecursive(CharNode*& head, CharNode* toAppend) {
+	if (!head) {
+		head = toAppend;
+		return;
+	}
+	if (!head->next) {
+		head->next = toAppend;
+		return;
+	}
+	appendCharListRecursive(head->next, toAppend);
+}
+
+CharNode* getSecondToLast(CharNode* node) {
+	if (!node || !node->next || !node->next->next) return node;
+	return getSecondToLast(node->next);
+}
+
 
 CharNode* bigIntAdd(CharNode* a, CharNode* b) {
 	int carry = 0;
@@ -337,25 +442,25 @@ CharNode* bigIntAdd(CharNode* a, CharNode* b) {
 	return result;
 }
 
-CharNode* bigIntAddNeg(CharNode* a, CharNode* b) {
-	// First, remove the '-' at the end of both numbers
-	removeTrailingMinus(a);
-	removeTrailingMinus(b);
-
-	// Perform standard addition
-	CharNode* result = bigIntAdd(a, b);
-
-	// Append '-' to the end of the result
-	CharNode* tail = result;
-	if (!tail) return createCharNode('-'); // If result was zero (unlikely here), just return "-"
-
-	while (tail->next) {
-		tail = tail->next;
-	}
-	tail->next = createCharNode('-');
-
-	return result;
-}
+//CharNode* bigIntAddNeg(CharNode* a, CharNode* b) {
+//	// First, remove the '-' at the end of both numbers
+//	removeTrailingMinus(a);
+//	removeTrailingMinus(b);
+//
+//	// Perform standard addition
+//	CharNode* result = bigIntAdd(a, b);
+//
+//	// Append '-' to the end of the result
+//	CharNode* tail = result;
+//	if (!tail) return createCharNode('-'); // If result was zero (unlikely here), just return "-"
+//
+//	while (tail->next) {
+//		tail = tail->next;
+//	}
+//	tail->next = createCharNode('-');
+//
+//	return result;
+//}
 
 void interpret(int ip, StackNode*& stackTop) {
 	if (ip >= programLength) return;
@@ -398,43 +503,73 @@ void interpret(int ip, StackNode*& stackTop) {
 		printStackReversed(stackTop);
 		break;
 	}
+	//case '-': {
+	//	if (!stackTop) break;
+
+	//	CharNode* list = stackTop->list;
+
+	//	// empty list
+	//	if (!list) {
+	//		stackTop->list = createCharNode('-');
+	//		break;
+	//	}
+
+	//	CharNode* curr = list;
+
+	//	// only one node, and it's '-'
+	//	if (!curr->next && curr->value == '-') {
+	//		delete curr;
+	//		stackTop->list = nullptr;
+	//		break;
+	//	}
+
+	//	while (curr->next && curr->next->next) {
+	//		curr = curr->next;
+	//	}
+
+	//	if (curr->next && curr->next->value == '-') {
+	//		delete curr->next;
+	//		curr->next = nullptr;
+	//	}
+	//	else {
+	//		CharNode* tail = stackTop->list;
+	//		while (tail->next) tail = tail->next;
+	//		tail->next = createCharNode('-');
+	//	}
+
+	//	break;
+	//}
 	case '-': {
 		if (!stackTop) break;
 
 		CharNode* list = stackTop->list;
 
-		// empty list
 		if (!list) {
 			stackTop->list = createCharNode('-');
 			break;
 		}
 
-		CharNode* curr = list;
-
-		// only one node, and it's '-'
-		if (!curr->next && curr->value == '-') {
-			delete curr;
+		// One node and it's '-'
+		if (!list->next && list->value == '-') {
+			delete list;
 			stackTop->list = nullptr;
 			break;
 		}
 
-		while (curr->next && curr->next->next) {
-			curr = curr->next;
-		}
-
-		if (curr->next && curr->next->value == '-') {
-			delete curr->next;
-			curr->next = nullptr;
+		// Check if last character is '-' and remove it
+		CharNode* secondLast = getSecondToLast(list);
+		if (secondLast->next && secondLast->next->value == '-') {
+			delete secondLast->next;
+			secondLast->next = nullptr;
 		}
 		else {
-			CharNode* tail = stackTop->list;
-			while (tail->next) tail = tail->next;
+			// Append '-' at the end
+			CharNode* tail = getTail(stackTop->list);  // one loop, or recursive
 			tail->next = createCharNode('-');
 		}
 
 		break;
 	}
-
 	case ',': {
 		pop(stackTop);
 		break;
@@ -494,6 +629,12 @@ void interpret(int ip, StackNode*& stackTop) {
 	case '#': {
 		CharNode* A = pop(stackTop);
 		if (!stackTop) break;
+		appendCharListRecursive(stackTop->list, A);
+		break;
+	}
+	/*case '#': {
+		CharNode* A = pop(stackTop);
+		if (!stackTop) break;
 
 		if (!stackTop->list) {
 			stackTop->list = A;
@@ -506,7 +647,7 @@ void interpret(int ip, StackNode*& stackTop) {
 		}
 		temp->next = A;
 		break;
-	}
+	}*/
 	case '~': {
 		CharNode* ipList = intToCharList(ip);
 		push(stackTop, ipList);
@@ -632,15 +773,12 @@ void interpret(int ip, StackNode*& stackTop) {
 		else {
 			if (!aIsNeg && !bIsNeg) {
 				result = bigIntAdd(A, B);
-			}
+			}/*
 			else if (aIsNeg && bIsNeg) {
 				result = bigIntAddNeg(A, B);
-			}
+			}*/
 		}
-
-
 		push(stackTop, result);
-
 		deleteCharList(A);
 		deleteCharList(B);
 		break;
@@ -654,15 +792,22 @@ void interpret(int ip, StackNode*& stackTop) {
 	interpret(ip + 1, stackTop);
 }
 
+//void deleteStackNode(StackNode* head) {
+//	while (head) {
+//		StackNode* next = head->next;
+//
+//		deleteCharList(head->list);
+//
+//		delete head;
+//		head = next;
+//	}
+//}
+
 void deleteStackNode(StackNode* head) {
-	while (head) {
-		StackNode* next = head->next;
-
-		deleteCharList(head->list);
-
-		delete head;
-		head = next;
-	}
+	if (!head) return;
+	deleteCharList(head->list);
+	deleteStackNode(head->next);
+	delete head;
 }
 
 int main() {
